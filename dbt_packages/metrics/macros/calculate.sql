@@ -1,14 +1,23 @@
-{% macro calculate(metric_list, grain, dimensions=[], secondary_calculations=[], start_date=None, end_date=None, where=None) %}
-    {{ return(adapter.dispatch('calculate', 'metrics')(metric_list, grain, dimensions, secondary_calculations, start_date, end_date, where)) }}
+{% macro calculate(metric_list, grain=none, dimensions=[], secondary_calculations=[], start_date=none, end_date=none, where=none, date_alias=none) %}
+    {{ return(adapter.dispatch('calculate', 'metrics')(metric_list, grain, dimensions, secondary_calculations, start_date, end_date, where, date_alias)) }}
 {% endmacro %}
 
 
-{% macro default__calculate(metric_list, grain, dimensions=[], secondary_calculations=[], start_date=None, end_date=None, where=None) %}
+{% macro default__calculate(metric_list, grain=none, dimensions=[], secondary_calculations=[], start_date=none, end_date=none, where=none, date_alias=none) %}
     {#- Need this here, since the actual ref is nested within loops/conditions: -#}
     -- depends on: {{ ref(var('dbt_metrics_calendar_model', 'dbt_metrics_default_calendar')) }}
-    {# ############
+    
+    {#- ############
     VARIABLE SETTING - Creating the metric tree and making sure metric list is a list!
     ############ -#}
+
+    {%- if execute %}
+        {% do exceptions.warn(
+            "WARNING: dbt_metrics is going to be deprecated in dbt-core 1.6 in \
+July 2023 as part of the migration to MetricFlow. This package will \
+continue to work with dbt-core 1.5 but a 1.6 version will not be \
+released. If you have any questions, please join us in the #dbt-core-metrics in the dbt Community Slack") %}
+    {%- endif %}
 
     {%- if metric_list is not iterable -%}
         {%- set metric_list = [metric_list] -%}
@@ -31,35 +40,21 @@
         {%- do exceptions.raise_compiler_error("No metric or metrics provided") -%}
     {%- endif -%}
 
-    {%- if not grain -%}
-        {%- do exceptions.raise_compiler_error("No date grain provided") -%}
-    {%- endif -%}
-
-    {%- if where is iterable and (where is not string and where is not mapping) -%}
-        {%- do exceptions.raise_compiler_error("From v0.3.0 onwards, the where clause takes a single string, not a list of filters. Please fix to reflect this change") %}
-    {%- endif -%}
+    {%- do metrics.validate_timestamp(grain=grain, metric_tree=metric_tree, metrics_dictionary=metrics_dictionary, dimensions=dimensions) -%}
 
     {%- do metrics.validate_grain(grain=grain, metric_tree=metric_tree, metrics_dictionary=metrics_dictionary, secondary_calculations=secondary_calculations) -%}
 
     {%- do metrics.validate_derived_metrics(metric_tree=metric_tree) -%}
 
-    {%- do metrics.validate_dimension_list(dimensions=dimensions, metric_tree=metric_tree) -%} 
+    {%- do metrics.validate_dimension_list(dimensions=dimensions, metric_tree=metric_tree, metrics_dictionary=metrics_dictionary) -%} 
 
-    {%- do metrics.validate_metric_config(metrics_dictionary=metrics_dictionary) -%} 
+    {# {%- do metrics.validate_metric_config(metrics_dictionary=metrics_dictionary) -%}  #}
 
-    {#- ############
-    SECONDARY CALCULATION VALIDATION - Let there be window functions
-    ############ -#}
+    {%- do metrics.validate_where(where=where) -%} 
 
-    {%- for metric_name in metric_tree.base_set %}
-        {%- for calc_config in secondary_calculations if calc_config.aggregate -%}
-            {%- do metrics.validate_aggregate_coherence(metric_aggregate=metrics_dictionary[metric_name].calculation_method, calculation_aggregate=calc_config.aggregate) -%}
-        {%- endfor -%}
-    {%- endfor -%}
+    {%- do metrics.validate_secondary_calculations(metric_tree=metric_tree, metrics_dictionary=metrics_dictionary, grain=grain, secondary_calculations=secondary_calculations) -%} 
 
-    {%- for calc_config in secondary_calculations if calc_config.period -%}
-        {%- do metrics.validate_grain_order(metric_grain=grain, calculation_grain=calc_config.period) -%}
-    {%- endfor -%} 
+    {%- do metrics.validate_calendar_model() -%}
 
     {#- ############
     SQL GENERATION - Lets build that SQL!
@@ -73,6 +68,7 @@
         start_date=start_date,
         end_date=end_date,
         where=where,
+        date_alias=date_alias,
         metric_tree=metric_tree
     ) %}
 
