@@ -5,7 +5,6 @@ version: '0.1'
 
 profile: 'jaffle_shop'
 
-model-paths: ["models"]
 seed-paths: ["seeds"]
 test-paths: ["tests"]
 analysis-paths: ["analysis"]
