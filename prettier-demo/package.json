@@ -1,0 +1,8 @@
+{
+          "prettier": {
+                    "printWidth": 50,
+                    "bracketSpacing": false,
+                    "tabWidth": 3,
+                    "useTabs": false
+          }
+}
