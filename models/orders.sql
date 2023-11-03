@@ -53,4 +53,4 @@ final as (
 
 )
 
-select * from final
+select *, this_column_doesnt_exist from final
