@@ -4,20 +4,20 @@ config-version: 2
 version: '0.1'
 
 profile: 'jaffle_shop'
+config-version: 2
+require-dbt-version: [">=1.0.0", "<2.0.0"]
 
 model-paths: ["models"]
-seed-paths: ["seeds"]
+analysis-paths: ["analyses"]
 test-paths: ["tests"]
-analysis-paths: ["analysis"]
+seed-paths: ["seeds"]
 macro-paths: ["macros"]
 
 target-path: "target"
 clean-targets:
     - "target"
-    - "dbt_modules"
+    - "dbt_packages"
     - "logs"
-
-require-dbt-version: [">=1.0.0", "<2.0.0"]
 
 models:
   jaffle_shop:
