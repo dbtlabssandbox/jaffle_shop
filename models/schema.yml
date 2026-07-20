@@ -62,7 +62,7 @@ models:
         tests:
           - unique
           - not_null
-        description: This is a unique identifier for an order
+        description: The unique primary key for each order
 
       - name: customer_id
         description: Foreign key to the customers table
