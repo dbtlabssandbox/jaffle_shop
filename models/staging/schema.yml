@@ -26,6 +26,7 @@ models:
           - unique
           - not_null
       - name: payment_method
+        description: Identifies how the customer paid
         tests:
           - accepted_values:
               values: ['credit_card', 'coupon', 'bank_transfer', 'gift_card']
