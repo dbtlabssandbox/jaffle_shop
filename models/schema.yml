@@ -105,3 +105,16 @@ models:
         description: Amount of the order (AUD) paid for by gift card
         tests:
           - not_null
+
+  - name: orders_per_customer
+    description: This table counts the number of orders placed by each customer
+
+    columns:
+      - name: customer_id
+        description: This is a unique identifier for a customer
+        tests:
+          - unique
+          - not_null
+
+      - name: number_of_orders
+        description: Count of the number of orders a customer has placed
